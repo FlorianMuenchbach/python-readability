@@ -9,12 +9,13 @@ from .compat import str_
 
 utf8_parser = lxml.html.HTMLParser(encoding='utf-8')
 
-def build_doc(page):
+def build_doc(page, override_encoding=None):
     if isinstance(page, str_):
-        encoding = None
+        encoding = override_encoding
         decoded_page = page
     else:
-        encoding = get_encoding(page) or 'utf-8'
+        encoding = get_encoding(page) or 'utf-8' if override_encoding is None \
+                else override_encoding
         decoded_page = page.decode(encoding, 'replace')
     
     # XXX: we have to do .decode and .encode even for utf-8 pages to remove bad characters

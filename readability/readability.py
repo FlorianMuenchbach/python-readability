@@ -103,9 +103,9 @@ class Document:
         self.retry_length = retry_length
         self.xpath = xpath
 
-    def _html(self, force=False):
+    def _html(self, force=False, override_encoding=None):
         if force or self.html is None:
-            self.html = self._parse(self.input)
+            self.html = self._parse(self.input, override_encoding)
             if self.xpath:
                 root = self.html.getroottree()
                 for i in self.html.getiterator():
@@ -113,8 +113,8 @@ class Document:
                     i.attrib['x'] = root.getpath(i)
         return self.html
 
-    def _parse(self, input):
-        doc, self.encoding = build_doc(input)
+    def _parse(self, input, override_encoding=None):
+        doc, self.encoding = build_doc(input, override_encoding)
         doc = html_cleaner.clean_html(doc)
         base_href = self.url
         if base_href:
@@ -130,19 +130,19 @@ class Document:
             doc.resolve_base_href()
         return doc
 
-    def content(self):
-        return get_body(self._html(True))
+    def content(self, override_encoding=None):
+        return get_body(self._html(True, override_encoding))
 
-    def title(self):
-        return get_title(self._html(True))
+    def title(self, override_encoding=None):
+        return get_title(self._html(True, override_encoding))
 
-    def short_title(self):
-        return shorten_title(self._html(True))
+    def short_title(self, override_encoding=None):
+        return shorten_title(self._html(True, override_encoding))
 
     def get_clean_html(self):
          return clean_attributes(tounicode(self.html))
 
-    def summary(self, html_partial=False):
+    def summary(self, html_partial=False, override_encoding=None):
         """Generate the summary of the html docuemnt
 
         :param html_partial: return only the div of the document, don't wrap
@@ -152,7 +152,7 @@ class Document:
         try:
             ruthless = True
             while True:
-                self._html(True)
+                self._html(True, override_encoding)
                 for i in self.tags(self.html, 'script', 'style'):
                     i.drop_tree()
                 for i in self.tags(self.html, 'body'):
@@ -278,11 +278,11 @@ class Document:
         total_length = text_length(elem)
         return float(link_length) / max(total_length, 1)
 
-    def score_paragraphs(self, ):
+    def score_paragraphs(self, override_encoding=None):
         MIN_LEN = self.min_text_length
         candidates = {}
         ordered = []
-        for elem in self.tags(self._html(), "p", "pre", "td"):
+        for elem in self.tags(self._html(override_encoding=override_encoding), "p", "pre", "td"):
             parent_node = elem.getparent()
             if parent_node is None:
                 continue
